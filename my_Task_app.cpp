@@ -54,9 +54,14 @@ public:
 		tags.insert(newtag);
 	}
 	void printTaskDetails(bool print_tag) const {//打印详细信息，print_tag为1则输出其所有tag
+
+		char stime[26];
+		char etime[26];
+		ctime_s(stime, sizeof(stime), &StartTime);
+		ctime_s(etime, sizeof(etime), &EndTime);
 		cout << "\nID:" << id
 			<< "\nTitle: " << Title << "\nDescription: " << Description
-			<< "\nStart: " << ctime(&StartTime) << "End: " << ctime(&EndTime) << "Priority: "
+			<< "\nStart: " << stime << "End: " << etime << "Priority: "
 			<< (isImportant == 1 ? "High" : "Low")
 			<< "\nisCompleted: " << (isCompleted == 1 ? "YES" : "NO");
 		if (print_tag == 1) {
@@ -251,6 +256,16 @@ public:
 		}
 	}
 
+	void printAllTags() const {
+		cout << "\nTags for User: " << Username << "\n";
+		for (set<Tag*>::iterator it = tags.begin(); it != tags.end(); ++it) {
+			Tag* t = *it;
+			string str = t->Gettagname();
+			cout << str << " ";
+		}
+		cout << endl;
+	}
+
 	void printCompletedTasks() const {
 		cout << "\nCompleted Tasks for User: " << Username << "\n";
 		for (int i = 0; i < done_tasks.size(); ++i) {
@@ -306,7 +321,9 @@ void displayMenu() {
 	cout << "4. Create New Tag\n";
 	cout << "5. Assign Tag to Task\n";
 	cout << "6. Set Task Reminder\n";
-	cout << "7. Exit\n";
+	cout << "7. view all tags\n";
+	cout << "8. Query tasks with a specific tag\n";
+	cout << "9. Exit\n";
 	cout << "=============================\n";
 }
 
@@ -333,7 +350,7 @@ int main() {
 			getline(cin, description);
 
 			time_t now = time(0);
-			/*
+
 			int year, month, day, hour, minute;
 			cout << "Enter End year: ";
 			cin >> year;
@@ -353,8 +370,8 @@ int main() {
 			t.tm_min = minute;
 			t.tm_sec = 0;
 			time_t end_time = std::mktime(&t);
-			*/
-			time_t end_time = now + 3600;
+
+			//time_t end_time = now + 3600;
 			user.add_new_task(title, description, now, end_time, false, false);
 			cout << "Task Created Successfully!" << endl;
 			break;
@@ -416,8 +433,28 @@ int main() {
 			time_t reminder_time;
 			cout << "Enter Task ID to set reminder: ";
 			cin >> task_id;
-			cout << "Enter reminder time (Unix timestamp): ";
-			cin >> reminder_time;
+			cout << "Enter reminder time \n ";
+
+			int year, month, day, hour, minute;
+			cout << "Enter reminder year: ";
+			cin >> year;
+			cout << "Enter reminder month: ";
+			cin >> month;
+			cout << "Enter reminder day: ";
+			cin >> day;
+			cout << "Enter reminder hour: ";
+			cin >> hour;
+			cout << "Enter reminder minute: ";
+			cin >> minute;
+			std::tm t = {};
+			t.tm_year = year - 1900;  // tm_year 从1900年开始
+			t.tm_mon = month - 1;     // tm_mon 从0开始
+			t.tm_mday = day;
+			t.tm_hour = hour;
+			t.tm_min = minute;
+			t.tm_sec = 0;
+			reminder_time = std::mktime(&t);
+
 
 			Task* task = nullptr;
 
@@ -438,9 +475,28 @@ int main() {
 			break;
 		}
 		case 7: {
+			user.printAllTags();
+			break;
+		}
+		case 8: {
+			string str;
+			cout << "Enter Tag Name: ";
+			cin >> str;
+			Tag* t = user.FindTag(str);
+			if (t == nullptr) {
+				cout << "Tag not found!" << endl;
+			}
+			else {
+				t->print_tasks();
+				cout << "task print successfully!" << endl;
+			}
+			break;
+		}
+		case 9: {
 			cout << "Exiting the Task Manager... Goodbye!" << endl;
 			return 0;
 		}
+
 		default:
 			cout << "Invalid choice. Please try again." << endl;
 			break;
